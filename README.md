@@ -10,9 +10,8 @@ Then, run the topmost line on the Dockerfile to pass the screen to the local mac
 
 Lastly, after launching the docker container, build the package:
 
-> colcon build
-> source install/setup.bash
+> colcon build && source install/setup.bash
 
 Now, you can run the launch file:
 
-> ros2 launch turtlebot4_nav simple_ahg2202.launch
+> ros2 launch turtlebot4_nav simple_ahg2202.launch.py
