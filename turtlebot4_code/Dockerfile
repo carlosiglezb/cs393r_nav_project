@@ -69,7 +69,7 @@ RUN apt-get install -y ros-humble-plotjuggler-ros
 
 # install apt deps
 RUN apt-get update && apt-get install -y vim
-
+RUN apt-get install -y libeigen3-dev
 RUN apt install -y libx11-6
 
 ARG HOST_UID

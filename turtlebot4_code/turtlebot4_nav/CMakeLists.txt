@@ -9,14 +9,24 @@ find_package(ament_cmake REQUIRED)
 
 # create ROS2 nodes
 find_package(rclcpp REQUIRED)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
+find_package(irobot_create_msgs REQUIRED)
+find_package(rclcpp_action REQUIRED)
 
 include_directories(include)
 
 add_executable(turtlebot4_recharge_monitor_node src/turtlebot4_recharge_monitor_node.cpp)
-ament_target_dependencies(turtlebot4_recharge_monitor_node rclcpp Eigen sensor_msgs nav_msgs)
+ament_target_dependencies(turtlebot4_recharge_monitor_node
+        rclcpp
+        Eigen3
+        sensor_msgs
+        nav_msgs
+        nav2_msgs
+        irobot_create_msgs
+        rclcpp_action)
 
 target_include_directories(turtlebot4_recharge_monitor_node PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
