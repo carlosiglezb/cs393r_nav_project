@@ -280,5 +280,110 @@
                 </visual>
             </link>
         </model>
+        <include>
+            <name>Sofa1</name>
+            <pose>-1 6 0 0 0 0</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Sofa</uri>
+        </include>
+        <include>
+            <name>DeskTop1</name>
+            <pose>2.5 23.5 0 0 0 0</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Desk</uri>
+        </include>
+        <include>
+            <name>ChairTop1</name>
+            <pose>3.1 23.5 0 0 0 -1.5708</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/OfficeChairGrey</uri>
+        </include>
+        <include>
+            <name>DeskTop2</name>
+            <pose>0 23.5 0 0 0 0</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Desk</uri>
+        </include>
+        <include>
+            <name>ChairTop2</name>
+            <pose>0.6 23.5 0 0 0 -1.5708</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/OfficeChairGrey</uri>
+        </include>
+        <include>
+            <name>Desk1</name>
+            <pose>-9 22 0 0 0 1.5708</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Desk</uri>
+        </include>
+        <include>
+            <name>Chair1</name>
+            <pose>-9 22.6 0 0 0 0</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/OfficeChairGrey</uri>
+        </include>
+        <include>
+            <name>Desk2</name>
+            <pose>-9 21.4 0 0 0 -1.5708</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Desk</uri>
+        </include>
+        <include>
+            <name>Chair2</name>
+            <pose>-9 20.8 0 0 0 3.1416</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/OfficeChairGrey</uri>
+        </include>
+        <include>
+            <name>Desk3</name>
+            <pose>-9 19 0 0 0 1.5708</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Desk</uri>
+        </include>
+        <include>
+            <name>Chair3</name>
+            <pose>-9 19.6 0 0 0 0</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/OfficeChairGrey</uri>
+        </include>
+        <include>
+            <name>Desk4</name>
+            <pose>-9 18.4 0 0 0 -1.5708</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Desk</uri>
+        </include>
+        <include>
+            <name>Chair4</name>
+            <pose>-9 17.8 0 0 0 3.1416</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/OfficeChairGrey</uri>
+        </include>
+        <include>
+            <name>Desk5</name>
+            <pose>-9 16 0 0 0 1.5708</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Desk</uri>
+        </include>
+        <include>
+            <name>Chair5</name>
+            <pose>-9 16.6 0 0 0 0</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/OfficeChairGrey</uri>
+        </include>
+        <include>
+            <name>Desk6</name>
+            <pose>-9 15.4 0 0 0 -1.5708</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Desk</uri>
+        </include>
+        <include>
+            <name>Chair6</name>
+            <pose>-9 14.8 0 0 0 3.1416</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/OfficeChairGrey</uri>
+        </include>
+        <include>
+            <name>Desk7</name>
+            <pose>-9 13 0 0 0 1.5708</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Desk</uri>
+        </include>
+        <include>
+            <name>Chair7</name>
+            <pose>-9 13.6 0 0 0 0</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/OfficeChairGrey</uri>
+        </include>
+        <include>
+            <name>Desk8</name>
+            <pose>-9 12.4 0 0 0 -1.5708</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Desk</uri>
+        </include>
+        <include>
+            <name>Chair8</name>
+            <pose>-9 11.8 0 0 0 3.1416</pose>
+            <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/OfficeChairGrey</uri>
+        </include>
     </world>
 </sdf>
