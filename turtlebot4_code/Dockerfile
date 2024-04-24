@@ -84,6 +84,7 @@ RUN echo "source /home/ros2_ws/install/setup.sh" >> ~/.bashrc
 RUN echo "export ROS_DOMAIN_ID=25" >> ~/.bashrc
 RUN echo "export IGN_CONFIG_PATH=/usr/share/ignition/" >> ~/.bashrc
 RUN echo "export GZ_VERSION=${GZ_VERSION}" >> ~/.bashrc
+RUN echo "alias run_maze_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py slam:=true nav2:=true rviz:=true world:=maze' " >> ~/.bashrc
 
 # env vars for the nvidia-container-runtime
 ENV QT_X11_NO_MITSHM 1
@@ -92,6 +93,7 @@ ENV QT_X11_NO_MITSHM 1
 ENV TURTLEBOT4_NAV_DOCKER_CONTEXT 1
 COPY --chown=dev:dev ./tmux_session.sh /home/dev/tmux_session.sh
 COPY --chown=dev:dev ./turtlebot4_nav /home/dev/turtlebot4_nav
+COPY --chown=dev:dev ./pj_layouts /home/dev/pj_layouts
 RUN echo "export GZ_SIM_RESOURCE_PATH=/home/dev/turtlebot4_nav/worlds/" >> ~/.bashrc
 RUN chmod u+x /home/dev/tmux_session.sh
 CMD [ "/home/dev/tmux_session.sh" ]

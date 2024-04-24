@@ -61,15 +61,15 @@ tmux set mouse on
 window=0
 
 tmux rename-window -t $session:$window 'roscore'
-#tmux send-keys -t $session:$window 'roscore' C-m
+tmux send-keys -t $session:$window 'colcon build && source install/setup.bash && run_maze_sim' C-m
 
-#window=1
-#tmux new-window -t $session:$window -n 'simulator'
-#tmux send-keys -t $session:$window "cd ${INSTALL_PATH}/ut_automata && ./bin/simulator --localize" C-m
+window=1
+tmux new-window -t $session:$window -n 'recharge_node'
+tmux send-keys -t $session:$window "source install/setup.bash && ros2 run turtlebot4_nav turtlebot4_recharge_monitor_node" C-m
 
-#window=2
-#tmux new-window -t $session:$window -n 'websocket'
-#tmux send-keys -t $session:$window "cd ${INSTALL_PATH}/ut_automata && ./bin/websocket" C-m
+window=2
+tmux new-window -t $session:$window -n 'plotjuggler'
+tmux send-keys -t $session:$window "ros2 run plotjuggler plotjuggler" C-m
 
 # give the host user sudo permissions
 echo "$uname ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$uname && \
