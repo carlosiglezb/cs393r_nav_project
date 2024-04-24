@@ -9,6 +9,7 @@
 #include "eigen3/Eigen/Dense"
 // ROS Messages
 #include "nav_msgs/msg/path.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "irobot_create_msgs/msg/dock_status.hpp"
@@ -24,6 +25,7 @@ public:
             : Node("turtlebot4_recharge_monitor_node")
     {
       docking_station_pos_ = docking_station_pos;
+      robot_pos_ = Eigen::Vector2f(0.0, 0.0); // assume robot starts at origin
       float max_charge = 1.63;             // maximum battery charge [Ah]
 
       // Model of battery discharge to distance
@@ -35,6 +37,13 @@ public:
       b_replan_to_docking_station_ = false;
       b_prepare_to_dock_ = false;
       b_is_docked_ = false;
+      b_replan_to_docking_station_sent_ = false;
+
+      // Subscribe to the Path message to compute distance to the goal
+      odom_subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>(
+            "/odom",
+            rclcpp::SensorDataQoS(),
+            std::bind(&TurtleBot4RechargeMonitorNode::odom_callback, this, std::placeholders::_1));
 
       // Subscribe to the Path message to compute distance to the goal
       path_to_goal_subscriber_ = this->create_subscription<nav_msgs::msg::Path>(
@@ -61,29 +70,47 @@ public:
       dock_client_ = rclcpp_action::create_client<irobot_create_msgs::action::Dock>(this, "/dock");
 
       // Debug
-      replan_publisher_ = this->create_publisher<std_msgs::msg::Bool>("debug/replan_called", 5);
+      replan_publisher_ = this->create_publisher<std_msgs::msg::Bool>("debug/replan_called", 1);
+      near_docking_publisher_ = this->create_publisher<std_msgs::msg::Bool>("debug/near_docking", 1);
     }
 
-    void path_distance_callback(const nav_msgs::msg::Path::SharedPtr msg)
+    void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
+    {
+      robot_pos_ = Eigen::Vector2f(msg->pose.pose.position.x, msg->pose.pose.position.y);
+    }
+
+    void path_distance_callback(nav_msgs::msg::Path::SharedPtr msg)
     {
       // TODO check overall logic of flags
       // reset flags and exit if docked
       if (b_is_docked_) {
         b_prepare_to_dock_ = false;
         b_replan_to_docking_station_ = false;
+        b_replan_to_docking_station_sent_ = false;
+        std::cout << "Docked. Resetting flags." << std::endl;
         return;
-      }
-
-      // dock if requested and we are near docking station
-      if (b_prepare_to_dock_) {
-        if (b_dock_visible_) {
-          send_dock_command();
-        }
       }
 
       // if we are on our way to the docking station, no need to estimate distance-to-discharge
-      if (b_replan_to_docking_station_) {
-        return;
+      bool b_near_docking_station = (robot_pos_ - docking_station_pos_).norm() < 0.5;
+      auto near_dock_msg = std_msgs::msg::Bool();
+      near_dock_msg.data = b_near_docking_station;
+      near_docking_publisher_->publish(near_dock_msg);
+      if (b_near_docking_station) {
+        if (b_replan_to_docking_station_) {
+          // dock if requested and we are near docking station
+          if (b_prepare_to_dock_) {
+            if (b_dock_visible_) {
+              send_dock_command();
+              std::cout << "Docking" << std::endl;
+            }
+          }
+
+          // we have arrived to the docking station
+          b_replan_to_docking_station_ = false;
+          b_replan_to_docking_station_sent_ = false;
+          std::cout << "Arrived near docking station" << std::endl;
+        }
       }
 
       // Compute the distance to the goal
@@ -100,7 +127,7 @@ public:
               pow(docking_station_pos_[1] - msg->poses[msg->poses.size()-1].pose.position.y, 2));
 
       float d_plan = distance_to_goal + distance_goal_to_docking_station;
-      float d_available = 4.;     // [FOR TESTING PURPOSES ONLY]
+      float d_available = 6.;     // [FOR TESTING PURPOSES ONLY]
 //      float d_available = dist_per_charge_ * (battery_charge_ - min_safe_charge);
       // If total path distance is greater than the safe charge distance, then
       // the robot should return to the docking station
@@ -109,7 +136,14 @@ public:
         auto goal = nav2_msgs::action::NavigateToPose::Goal();
         goal.pose.pose.position.x = docking_station_pos_[0];
         goal.pose.pose.position.y = docking_station_pos_[1];
+        goal.pose.header.frame_id = "map";
+        goal.pose.header.stamp = this->now();
         replan_to_(goal);
+
+        // set new goal at docking station
+        auto replan_msg = std_msgs::msg::Bool();
+        replan_msg.data = true;
+        replan_publisher_->publish(replan_msg);
         b_replan_to_docking_station_ = true;
         b_prepare_to_dock_ = true;
         return;
@@ -134,21 +168,57 @@ public:
     void replan_to_(const nav2_msgs::action::NavigateToPose::Goal &goal)
     {
       // cancel current plan
-      nav_to_pose_client_->async_cancel_all_goals();
+      auto cancel_future = nav_to_pose_client_->async_cancel_all_goals();
       std::cout << "Canceling current plan" << std::endl;
 
-      // set new goal at docking station
-      nav_to_pose_client_->async_send_goal(goal);
-      std::cout << "Replanning to docking station" << std::endl;
-      auto msg = std_msgs::msg::Bool();
-      msg.data = true;
-      replan_publisher_->publish(msg);
+      auto send_goal_options = rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SendGoalOptions();
+      send_goal_options.goal_response_callback = std::bind(&TurtleBot4RechargeMonitorNode::goal_response_callback, this, std::placeholders::_1);
+      send_goal_options.feedback_callback = std::bind(&TurtleBot4RechargeMonitorNode::feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
+      send_goal_options.result_callback = std::bind(&TurtleBot4RechargeMonitorNode::result_callback, this, std::placeholders::_1);
+      nav_to_pose_client_->async_send_goal(goal, send_goal_options);
+      std::cout << "Scheduled send goal" << std::endl;
+    }
+
+    void goal_response_callback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr &goal)
+    {
+      if (!goal) {
+        std::cout << "Goal was rejected by server" << std::endl;
+      } else {
+        std::cout << "Goal accepted by server, waiting for result" << std::endl;
+      }
+    }
+
+    void feedback_callback(
+            const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr,
+            const std::shared_ptr<const nav2_msgs::action::NavigateToPose::Feedback> feedback)
+    {
+      std::cout << "Received feedback."<< std::endl;
+      std::cout << "Current pose: " << feedback->current_pose.pose.position.x << ", " << feedback->current_pose.pose.position.y << std::endl;
+      std::cout << "Remaining distance: " << feedback->distance_remaining << std::endl;
+    }
+
+    void result_callback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::WrappedResult &result)
+    {
+      switch (result.code) {
+        case rclcpp_action::ResultCode::SUCCEEDED:
+          std::cout << "Goal succeeded" << std::endl;
+          break;
+        case rclcpp_action::ResultCode::ABORTED:
+          std::cout << "Goal aborted" << std::endl;
+          break;
+        case rclcpp_action::ResultCode::CANCELED:
+          std::cout << "Goal canceled" << std::endl;
+          break;
+        default:
+          std::cout << "Unknown result code" << std::endl;
+      }
     }
 
     void send_dock_command()
     {
       auto msg = irobot_create_msgs::action::Dock::Goal();
       dock_client_->async_send_goal(msg);
+      std::cout << "Sent dock command" << std::endl;
     }
 
 private:
@@ -157,15 +227,18 @@ private:
     rclcpp_action::Client<irobot_create_msgs::action::Dock>::SharedPtr dock_client_;
 
     // Subscribers
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber_;
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_to_goal_subscriber_;
     rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr battery_status_subscriber_;
     rclcpp::Subscription<irobot_create_msgs::msg::DockStatus>::SharedPtr dock_status_subscriber_;
 
     // Publishers
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr replan_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr near_docking_publisher_;
 
     // Properties
     Eigen::Vector2f docking_station_pos_; // Docking station position (map frame)
+    Eigen::Vector2f robot_pos_;           // Robot position (map frame)
     float min_safe_charge;            // Minimum desired battery charge at docking station
     float battery_charge_;                // Current battery charge [Ah]
 //    float battery_percentage_;            // Current battery percentage
@@ -175,6 +248,7 @@ private:
     bool b_replan_to_docking_station_;    // Flag to replan to docking stations
     bool b_prepare_to_dock_;              // Flag to prepare to dock
     bool b_is_docked_;                    // Flag to check if robot is docked
+    bool b_replan_to_docking_station_sent_;   // Flag to check if replan to docking station has been sent
 };
 
 
@@ -182,7 +256,7 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  Eigen::Vector2f docking_station_pos(0.0, -0.1);
+  Eigen::Vector2f docking_station_pos(-0.1, 0.0);
   rclcpp::spin(std::make_shared<TurtleBot4RechargeMonitorNode>(docking_station_pos));
   rclcpp::shutdown();
   return 0;
