@@ -13,10 +13,11 @@ find_package(Eigen3 REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(irobot_create_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
 
-include_directories(include)
+#include_directories(include)
 
 add_executable(turtlebot4_recharge_monitor_node src/turtlebot4_recharge_monitor_node.cpp)
 ament_target_dependencies(turtlebot4_recharge_monitor_node
@@ -25,6 +26,7 @@ ament_target_dependencies(turtlebot4_recharge_monitor_node
         sensor_msgs
         nav_msgs
         nav2_msgs
+        std_msgs
         irobot_create_msgs
         rclcpp_action)
 
@@ -37,7 +39,7 @@ install(TARGETS turtlebot4_recharge_monitor_node
         DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
-install(DIRECTORY include/ DESTINATION include)
+#install(DIRECTORY include/ DESTINATION include)
 
 #ament_export_include_directories(include)
 #ament_export_dependencies(sensor_msgs nav_msgs)

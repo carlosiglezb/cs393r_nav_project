@@ -3,12 +3,14 @@
 #include <future>
 #include <memory>
 #include <string>
+#include <iostream>
 
 #include "rclcpp/rclcpp.hpp"
 #include "eigen3/Eigen/Dense"
 // ROS Messages
 #include "nav_msgs/msg/path.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "irobot_create_msgs/msg/dock_status.hpp"
 // Actions
 #include "rclcpp_action/rclcpp_action.hpp"
@@ -22,13 +24,13 @@ public:
             : Node("turtlebot4_recharge_monitor_node")
     {
       docking_station_pos_ = docking_station_pos;
+      float max_charge = 1.63;             // maximum battery charge [Ah]
 
       // Model of battery discharge to distance
-      min_battery_percentage_ = 0.15;     // minimum of 15% battery charge at end of trip
-      battery_percentage_ = 1;            // full battery charge
-      dist_per_charge_ = 20.;         // 20 meters per 1% charge
-      dist_at_min_charge_ = dist_per_charge_ * min_battery_percentage_;     // ignore offset
-      dist_offset_ = 0.0;             // offset for safety
+      float min_battery_percentage_ = 0.20;     // minimum of 20% battery charge at end of trip
+      min_safe_charge = min_battery_percentage_ * max_charge;     // min allowed charge at dock
+      battery_charge_ = 1.63;             // assume full battery charge (get updated at next tick)
+      dist_per_charge_ = 570.;            // 570 meters per Ah, obtained from data collection
       b_dock_visible_ = false;
       b_replan_to_docking_station_ = false;
       b_prepare_to_dock_ = false;
@@ -57,6 +59,9 @@ public:
 
       // Client to send dock command
       dock_client_ = rclcpp_action::create_client<irobot_create_msgs::action::Dock>(this, "/dock");
+
+      // Debug
+      replan_publisher_ = this->create_publisher<std_msgs::msg::Bool>("debug/replan_called", 5);
     }
 
     void path_distance_callback(const nav_msgs::msg::Path::SharedPtr msg)
@@ -95,13 +100,11 @@ public:
               pow(docking_station_pos_[1] - msg->poses[msg->poses.size()-1].pose.position.y, 2));
 
       float d_plan = distance_to_goal + distance_goal_to_docking_station;
-      float d_available = dist_per_charge_ * battery_percentage_ - dist_offset_;
+      float d_available = 4.;     // [FOR TESTING PURPOSES ONLY]
+//      float d_available = dist_per_charge_ * (battery_charge_ - min_safe_charge);
       // If total path distance is greater than the safe charge distance, then
       // the robot should return to the docking station
-      if (d_available - d_plan > dist_at_min_charge_) {
-        // finish plan
-        b_replan_to_docking_station_ = false;
-      } else {
+      if (d_plan >= d_available) {
         // re-plan and return to docking station
         auto goal = nav2_msgs::action::NavigateToPose::Goal();
         goal.pose.pose.position.x = docking_station_pos_[0];
@@ -109,13 +112,17 @@ public:
         replan_to_(goal);
         b_replan_to_docking_station_ = true;
         b_prepare_to_dock_ = true;
+        return;
       }
-
+      auto replan_msg = std_msgs::msg::Bool();
+      replan_msg.data = false;
+      replan_publisher_->publish(replan_msg);
     }
 
     void battery_status_callback(const sensor_msgs::msg::BatteryState::SharedPtr msg)
     {
-      battery_percentage_ = msg->percentage;
+//      battery_percentage_ = msg->percentage;
+      battery_charge_ = msg->charge;
     }
 
     void dock_status_callback(const irobot_create_msgs::msg::DockStatus::SharedPtr msg)
@@ -128,9 +135,14 @@ public:
     {
       // cancel current plan
       nav_to_pose_client_->async_cancel_all_goals();
+      std::cout << "Canceling current plan" << std::endl;
 
       // set new goal at docking station
       nav_to_pose_client_->async_send_goal(goal);
+      std::cout << "Replanning to docking station" << std::endl;
+      auto msg = std_msgs::msg::Bool();
+      msg.data = true;
+      replan_publisher_->publish(msg);
     }
 
     void send_dock_command()
@@ -149,12 +161,15 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr battery_status_subscriber_;
     rclcpp::Subscription<irobot_create_msgs::msg::DockStatus>::SharedPtr dock_status_subscriber_;
 
+    // Publishers
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr replan_publisher_;
+
     // Properties
     Eigen::Vector2f docking_station_pos_; // Docking station position (map frame)
-    float min_battery_percentage_;        // Minimum desired battery percentage at docking station
-    float battery_percentage_;            // Current battery percentage
+    float min_safe_charge;            // Minimum desired battery charge at docking station
+    float battery_charge_;                // Current battery charge [Ah]
+//    float battery_percentage_;            // Current battery percentage
     float dist_per_charge_;               // Slope of (available) distance (y) vs charge (x) curve
-    float dist_at_min_charge_;            // Distance that can be traveled at min_battery_charge
     float dist_offset_;                   // Offset for safety
     bool b_dock_visible_;                   // Flag to check if docking station is visible
     bool b_replan_to_docking_station_;    // Flag to replan to docking stations
