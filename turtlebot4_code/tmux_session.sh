@@ -61,7 +61,7 @@ tmux set mouse on
 window=0
 
 tmux rename-window -t $session:$window 'roscore'
-tmux send-keys -t $session:$window 'colcon build && source install/setup.bash && run_maze_sim' C-m
+tmux send-keys -t $session:$window 'colcon build && source install/setup.bash && run_ahg_sim' C-m
 
 window=1
 tmux new-window -t $session:$window -n 'recharge_node'

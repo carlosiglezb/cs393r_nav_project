@@ -29,7 +29,7 @@ public:
       float max_charge = 1.63;             // maximum battery charge [Ah]
 
       // Model of battery discharge to distance
-      float min_battery_percentage_ = 0.20;     // minimum of 20% battery charge at end of trip
+      float min_battery_percentage_ = 0.60;     // minimum of 20% battery charge at end of trip
       min_safe_charge = min_battery_percentage_ * max_charge;     // min allowed charge at dock
       battery_charge_ = 1.63;             // assume full battery charge (get updated at next tick)
       dist_per_charge_ = 570.;            // 570 meters per Ah, obtained from data collection
@@ -256,7 +256,7 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  Eigen::Vector2f docking_station_pos(-0.1, 0.0);
+  Eigen::Vector2f docking_station_pos(-5.5, 24.);
   rclcpp::spin(std::make_shared<TurtleBot4RechargeMonitorNode>(docking_station_pos));
   rclcpp::shutdown();
   return 0;
