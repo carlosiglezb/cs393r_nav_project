@@ -12,6 +12,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/float32.hpp"
 #include "irobot_create_msgs/msg/dock_status.hpp"
 // Actions
 #include "rclcpp_action/rclcpp_action.hpp"
@@ -72,6 +73,8 @@ public:
       // Debug
       replan_publisher_ = this->create_publisher<std_msgs::msg::Bool>("debug/replan_called", 1);
       near_docking_publisher_ = this->create_publisher<std_msgs::msg::Bool>("debug/near_docking", 1);
+      d_available_publisher_ = this->create_publisher<std_msgs::msg::Float32>("debug/d_available", 1);
+      d_plan_publisher_ = this->create_publisher<std_msgs::msg::Float32>("debug/d_plan", 1);
     }
 
     void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -92,7 +95,7 @@ public:
       }
 
       // if we are on our way to the docking station, no need to estimate distance-to-discharge
-      bool b_near_docking_station = (robot_pos_ - docking_station_pos_).norm() < 0.5;
+      bool b_near_docking_station = (robot_pos_ - docking_station_pos_).norm() < 1.5;
       auto near_dock_msg = std_msgs::msg::Bool();
       near_dock_msg.data = b_near_docking_station;
       near_docking_publisher_->publish(near_dock_msg);
@@ -127,8 +130,16 @@ public:
               pow(docking_station_pos_[1] - msg->poses[msg->poses.size()-1].pose.position.y, 2));
 
       float d_plan = distance_to_goal + distance_goal_to_docking_station;
-      float d_available = 6.;     // [FOR TESTING PURPOSES ONLY]
-//      float d_available = dist_per_charge_ * (battery_charge_ - min_safe_charge);
+//      float d_available = 6.;     // [FOR TESTING PURPOSES ONLY]
+      float d_available = dist_per_charge_ * (battery_charge_ - min_safe_charge);
+
+      auto d_available_msg = std_msgs::msg::Float32();
+      d_available_msg.data = d_available;
+      d_available_publisher_->publish(d_available_msg);
+      auto d_plan_msg = std_msgs::msg::Float32();
+      d_plan_msg.data = d_plan;
+      d_plan_publisher_->publish(d_plan_msg);
+
       // If total path distance is greater than the safe charge distance, then
       // the robot should return to the docking station
       if (d_plan >= d_available) {

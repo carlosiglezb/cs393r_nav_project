@@ -97,6 +97,10 @@ COPY --chown=dev:dev ./tmux_session.sh /home/dev/tmux_session.sh
 COPY --chown=dev:dev ./turtlebot4_nav /home/dev/turtlebot4_nav
 COPY --chown=dev:dev ./pj_layouts /home/dev/pj_layouts
 RUN echo "export GZ_SIM_RESOURCE_PATH=/home/dev/turtlebot4_nav/worlds/" >> ~/.bashrc
+
+# uncomment below if you want to use GPU for Gazebo laser scan
+#RUN echo "export LIBGL_ALWAYS_SOFTWARE=true" >> ~/.bashrc
+
 RUN chmod u+x /home/dev/tmux_session.sh
 CMD [ "/home/dev/tmux_session.sh" ]
 ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
