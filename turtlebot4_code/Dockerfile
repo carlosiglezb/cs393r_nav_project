@@ -77,16 +77,26 @@ RUN useradd -ms /bin/bash dev && echo "dev:dev" | chpasswd && adduser dev sudo
 USER dev
 WORKDIR /home/dev
 
-
 # set up .bashrc
-RUN echo "source /opt/ros/humble/setup.sh" >> ~/.bashrc
-RUN echo "source /home/ros2_ws/install/setup.sh" >> ~/.bashrc
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+RUN echo "source /home/ros2_ws/install/setup.bash" >> ~/.bashrc
 RUN echo "export ROS_DOMAIN_ID=25" >> ~/.bashrc
 RUN echo "export IGN_CONFIG_PATH=/usr/share/ignition/" >> ~/.bashrc
 RUN echo "export GZ_VERSION=${GZ_VERSION}" >> ~/.bashrc
 RUN echo "alias run_maze_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py slam:=true nav2:=true rviz:=true world:=maze' " >> ~/.bashrc
 RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py slam:=true nav2:=true rviz:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708' " >> ~/.bashrc
 #RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py nav2:=true rviz:=true localization:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708' " >> ~/.bashrc
+
+RUN git clone https://github.com/ut-amrl/amrl_msgs.git && \
+    git clone https://github.com/ut-amrl/ut_turtlebots.git --recurse-submodules
+
+# build amrl_msgs and ut_turtlebots
+ENV ROS_VERSION=2
+RUN . /opt/ros/humble/setup.sh && \
+    . /home/ros2_ws/install/setup.sh && \
+    cd amrl_msgs/ && colcon build --packages-select amrl_msgs && \
+    . /home/dev/amrl_msgs/install/setup.sh && \
+    cd ../ut_turtlebots && colcon build --packages-select ut_turtlebots
 
 # env vars for the nvidia-container-runtime
 ENV QT_X11_NO_MITSHM 1

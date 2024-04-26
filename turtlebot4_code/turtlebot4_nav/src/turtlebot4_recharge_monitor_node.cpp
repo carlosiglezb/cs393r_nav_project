@@ -12,11 +12,14 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "irobot_create_msgs/msg/dock_status.hpp"
+#include "std_msgs/msg/float32.hpp"
+#include "amrl_msgs/msg/turtlebot_dock_status.hpp"
+//#include "irobot_create_msgs/msg/dock_status.hpp"
 // Actions
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
-#include "irobot_create_msgs/action/dock.hpp"
+#include "amrl_msgs/action/turtlebot_dock.hpp"
+//#include "irobot_create_msgs/action/dock.hpp"
 
 class TurtleBot4RechargeMonitorNode : public rclcpp::Node
 {
@@ -53,13 +56,14 @@ public:
 
       // Subscribe to battery status
       battery_status_subscriber_ = this->create_subscription<sensor_msgs::msg::BatteryState>(
-            "/battery_state",
+            "/ut/battery_state",
             rclcpp::SensorDataQoS(),
             std::bind(&TurtleBot4RechargeMonitorNode::battery_status_callback, this, std::placeholders::_1));
 
       // Subscribe to dock status to check if docking station is visible
-      dock_status_subscriber_ = this->create_subscription<irobot_create_msgs::msg::DockStatus>(
-            "/dock_status",
+//      dock_status_subscriber_ = this->create_subscription<irobot_create_msgs::msg::DockStatus>(
+      dock_status_subscriber_ = this->create_subscription<amrl_msgs::msg::TurtlebotDockStatus>(
+            "/ut/dock_status",
             rclcpp::SensorDataQoS(),
             std::bind(&TurtleBot4RechargeMonitorNode::dock_status_callback, this, std::placeholders::_1));
 
@@ -67,11 +71,14 @@ public:
       nav_to_pose_client_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(this, "/navigate_to_pose");
 
       // Client to send dock command
-      dock_client_ = rclcpp_action::create_client<irobot_create_msgs::action::Dock>(this, "/dock");
+//      dock_client_ = rclcpp_action::create_client<irobot_create_msgs::action::Dock>(this, "/dock");
+      dock_client_ = rclcpp_action::create_client<amrl_msgs::action::TurtlebotDock>(this, "/ut/turtlebot_dock");
 
       // Debug
       replan_publisher_ = this->create_publisher<std_msgs::msg::Bool>("debug/replan_called", 1);
       near_docking_publisher_ = this->create_publisher<std_msgs::msg::Bool>("debug/near_docking", 1);
+      d_available_publisher_ = this->create_publisher<std_msgs::msg::Float32>("debug/d_available", 1);
+      d_plan_publisher_ = this->create_publisher<std_msgs::msg::Float32>("debug/d_plan", 1);
     }
 
     void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -92,7 +99,7 @@ public:
       }
 
       // if we are on our way to the docking station, no need to estimate distance-to-discharge
-      bool b_near_docking_station = (robot_pos_ - docking_station_pos_).norm() < 0.5;
+      bool b_near_docking_station = (robot_pos_ - docking_station_pos_).norm() < 0.75;
       auto near_dock_msg = std_msgs::msg::Bool();
       near_dock_msg.data = b_near_docking_station;
       near_docking_publisher_->publish(near_dock_msg);
@@ -129,6 +136,15 @@ public:
       float d_plan = distance_to_goal + distance_goal_to_docking_station;
       float d_available = 6.;     // [FOR TESTING PURPOSES ONLY]
 //      float d_available = dist_per_charge_ * (battery_charge_ - min_safe_charge);
+
+      auto d_available_msg = std_msgs::msg::Float32();
+      d_available_msg.data = d_available;
+      d_available_publisher_->publish(d_available_msg);
+
+      auto d_plan_msg = std_msgs::msg::Float32();
+      d_plan_msg.data = d_plan;
+      d_plan_publisher_->publish(d_plan_msg);
+
       // If total path distance is greater than the safe charge distance, then
       // the robot should return to the docking station
       if (d_plan >= d_available) {
@@ -141,15 +157,15 @@ public:
         replan_to_(goal);
 
         // set new goal at docking station
-        auto replan_msg = std_msgs::msg::Bool();
-        replan_msg.data = true;
-        replan_publisher_->publish(replan_msg);
         b_replan_to_docking_station_ = true;
         b_prepare_to_dock_ = true;
+        auto replan_msg = std_msgs::msg::Bool();
+        replan_msg.data = b_replan_to_docking_station_;
+        replan_publisher_->publish(replan_msg);
         return;
       }
       auto replan_msg = std_msgs::msg::Bool();
-      replan_msg.data = false;
+      replan_msg.data = b_replan_to_docking_station_;
       replan_publisher_->publish(replan_msg);
     }
 
@@ -159,7 +175,8 @@ public:
       battery_charge_ = msg->charge;
     }
 
-    void dock_status_callback(const irobot_create_msgs::msg::DockStatus::SharedPtr msg)
+//    void dock_status_callback(const irobot_create_msgs::msg::DockStatus::SharedPtr msg)
+    void dock_status_callback(const amrl_msgs::msg::TurtlebotDockStatus::SharedPtr msg)
     {
       b_dock_visible_ = msg->dock_visible;
       b_is_docked_ = msg->is_docked;
@@ -192,8 +209,8 @@ public:
             const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr,
             const std::shared_ptr<const nav2_msgs::action::NavigateToPose::Feedback> feedback)
     {
-      std::cout << "Received feedback."<< std::endl;
-      std::cout << "Current pose: " << feedback->current_pose.pose.position.x << ", " << feedback->current_pose.pose.position.y << std::endl;
+//      std::cout << "Received feedback."<< std::endl;
+//      std::cout << "Current pose: " << feedback->current_pose.pose.position.x << ", " << feedback->current_pose.pose.position.y << std::endl;
       std::cout << "Remaining distance: " << feedback->distance_remaining << std::endl;
     }
 
@@ -216,7 +233,8 @@ public:
 
     void send_dock_command()
     {
-      auto msg = irobot_create_msgs::action::Dock::Goal();
+//      auto msg = irobot_create_msgs::action::Dock::Goal();
+      auto msg = amrl_msgs::action::TurtlebotDock::Goal();
       dock_client_->async_send_goal(msg);
       std::cout << "Sent dock command" << std::endl;
     }
@@ -224,17 +242,21 @@ public:
 private:
     // Actions
     rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr nav_to_pose_client_;
-    rclcpp_action::Client<irobot_create_msgs::action::Dock>::SharedPtr dock_client_;
+    rclcpp_action::Client<amrl_msgs::action::TurtlebotDock>::SharedPtr dock_client_;
+//    rclcpp_action::Client<irobot_create_msgs::action::Dock>::SharedPtr dock_client_;
 
     // Subscribers
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber_;
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_to_goal_subscriber_;
     rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr battery_status_subscriber_;
-    rclcpp::Subscription<irobot_create_msgs::msg::DockStatus>::SharedPtr dock_status_subscriber_;
+    rclcpp::Subscription<amrl_msgs::msg::TurtlebotDockStatus>::SharedPtr dock_status_subscriber_;
+//    rclcpp::Subscription<irobot_create_msgs::msg::DockStatus>::SharedPtr dock_status_subscriber_;
 
     // Publishers
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr replan_publisher_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr near_docking_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr d_available_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr d_plan_publisher_;
 
     // Properties
     Eigen::Vector2f docking_station_pos_; // Docking station position (map frame)
@@ -256,7 +278,8 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  Eigen::Vector2f docking_station_pos(-5.5, 24.);
+//  Eigen::Vector2f docking_station_pos(-5.5, 24.);   // if map is provided, dock is fixed
+  Eigen::Vector2f docking_station_pos(-0.5, 0.);      // if using slam, dock is in front of robot
   rclcpp::spin(std::make_shared<TurtleBot4RechargeMonitorNode>(docking_station_pos));
   rclcpp::shutdown();
   return 0;
