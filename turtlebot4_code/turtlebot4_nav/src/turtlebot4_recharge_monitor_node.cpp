@@ -246,6 +246,8 @@ private:
     // Publishers
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr replan_publisher_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr near_docking_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr d_available_publisher_;
+    rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr d_plan_publisher_;
 
     // Properties
     Eigen::Vector2f docking_station_pos_; // Docking station position (map frame)

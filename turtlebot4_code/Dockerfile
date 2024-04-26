@@ -85,8 +85,8 @@ RUN echo "export ROS_DOMAIN_ID=25" >> ~/.bashrc
 RUN echo "export IGN_CONFIG_PATH=/usr/share/ignition/" >> ~/.bashrc
 RUN echo "export GZ_VERSION=${GZ_VERSION}" >> ~/.bashrc
 RUN echo "alias run_maze_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py slam:=true nav2:=true rviz:=true world:=maze' " >> ~/.bashrc
-RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py slam:=true nav2:=true rviz:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708' " >> ~/.bashrc
-#RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py nav2:=true rviz:=true localization:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708' " >> ~/.bashrc
+#RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py slam:=true nav2:=true rviz:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708' " >> ~/.bashrc
+RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py nav2:=true rviz:=true localization:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708 map:=/home/dev/turtlebot4_nav/maps/AHG.yaml' " >> ~/.bashrc
 
 # env vars for the nvidia-container-runtime
 ENV QT_X11_NO_MITSHM 1
