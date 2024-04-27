@@ -4,6 +4,7 @@
 
 FROM osrf/ros:humble-desktop
 
+ENV ROS_VERSION=2
 ENV GZ_VERSION fortress
 ENV ROS_DISTRO humble
 RUN echo "export GZ_VERSION=${GZ_VERSION}" >> ~/.bashrc
@@ -91,12 +92,14 @@ RUN git clone https://github.com/ut-amrl/amrl_msgs.git && \
     git clone https://github.com/ut-amrl/ut_turtlebots.git --recurse-submodules
 
 # build amrl_msgs and ut_turtlebots
-ENV ROS_VERSION=2
 RUN . /opt/ros/humble/setup.sh && \
     . /home/ros2_ws/install/setup.sh && \
     cd amrl_msgs/ && colcon build --packages-select amrl_msgs && \
     . /home/dev/amrl_msgs/install/setup.sh && \
     cd ../ut_turtlebots && colcon build --packages-select ut_turtlebots
+
+RUN echo "source /home/dev/amrl_msgs/install/setup.bash" >> ~/.bashrc
+RUN echo "source /home/dev/ut_turtlebots/install/setup.bash" >> ~/.bashrc
 
 # env vars for the nvidia-container-runtime
 ENV QT_X11_NO_MITSHM 1

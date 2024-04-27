@@ -65,11 +65,15 @@ tmux send-keys -t $session:$window 'colcon build && source install/setup.bash &&
 
 window=1
 tmux new-window -t $session:$window -n 'recharge_node'
-tmux send-keys -t $session:$window "source install/setup.bash && ros2 run turtlebot4_nav turtlebot4_recharge_monitor_node" C-m
+tmux send-keys -t $session:$window "source install/setup.bash && source amrl_msgs/install/setup.bash && source ut_turtlebots/install/setup.bash ros2 run turtlebot4_nav turtlebot4_recharge_monitor_node" C-m
 
 window=2
 tmux new-window -t $session:$window -n 'plotjuggler'
 tmux send-keys -t $session:$window "ros2 run plotjuggler plotjuggler" C-m
+
+window=3
+tmux new-window -t $session:$window -n 'irobot_ut_iface'
+tmux send-keys -t $session:$windoe "python ut_turtlebots/ut_turtlebot_api_translator/ut_turtlebot_api_translator/turtlebot_amrl_dock_translator.py" C-m
 
 # give the host user sudo permissions
 echo "$uname ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$uname && \
