@@ -28,6 +28,7 @@ public:
             : Node("turtlebot4_recharge_monitor_node")
     {
       docking_station_pos_ = docking_station_pos;
+      docking_station_pos_map_ = Eigen::Vector2f(-5.5, 23.5);
       robot_pos_ = Eigen::Vector2f(0.0, 0.0); // assume robot starts at origin
       float max_charge = 1.63;             // maximum battery charge [Ah]
 
@@ -99,7 +100,8 @@ public:
       }
 
       // if we are on our way to the docking station, no need to estimate distance-to-discharge
-      bool b_near_docking_station = (robot_pos_ - docking_station_pos_).norm() < 0.75;
+//      bool b_near_docking_station = (robot_pos_ - docking_station_pos_).norm() < 0.75;
+      bool b_near_docking_station = (robot_pos_).norm() < 0.75;
       auto near_dock_msg = std_msgs::msg::Bool();
       near_dock_msg.data = b_near_docking_station;
       near_docking_publisher_->publish(near_dock_msg);
@@ -130,8 +132,8 @@ public:
 
       // Compute distance goal to docking station
       float distance_goal_to_docking_station = sqrt(
-              pow(docking_station_pos_[0] - msg->poses[msg->poses.size()-1].pose.position.x, 2) +
-              pow(docking_station_pos_[1] - msg->poses[msg->poses.size()-1].pose.position.y, 2));
+              pow(docking_station_pos_map_[0] - msg->poses[msg->poses.size()-1].pose.position.x, 2) +
+              pow(docking_station_pos_map_[1] - msg->poses[msg->poses.size()-1].pose.position.y, 2));
 
       float d_plan = distance_to_goal + distance_goal_to_docking_station;
       float d_available = 6.;     // [FOR TESTING PURPOSES ONLY]
@@ -150,8 +152,8 @@ public:
       if (d_plan >= d_available) {
         // re-plan and return to docking station
         auto goal = nav2_msgs::action::NavigateToPose::Goal();
-        goal.pose.pose.position.x = docking_station_pos_[0];
-        goal.pose.pose.position.y = docking_station_pos_[1];
+        goal.pose.pose.position.x = docking_station_pos_map_[0];
+        goal.pose.pose.position.y = docking_station_pos_map_[1];
         goal.pose.header.frame_id = "map";
         goal.pose.header.stamp = this->now();
         replan_to_(goal);
@@ -259,7 +261,8 @@ private:
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr d_plan_publisher_;
 
     // Properties
-    Eigen::Vector2f docking_station_pos_; // Docking station position (map frame)
+    Eigen::Vector2f docking_station_pos_; // Docking station position (odom frame)
+    Eigen::Vector2f docking_station_pos_map_; // Docking station position (map frame)
     Eigen::Vector2f robot_pos_;           // Robot position (map frame)
     float min_safe_charge;            // Minimum desired battery charge at docking station
     float battery_charge_;                // Current battery charge [Ah]
@@ -278,7 +281,7 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-//  Eigen::Vector2f docking_station_pos(-5.5, 24.);   // if map is provided, dock is fixed
+//  Eigen::Vector2f docking_station_pos(-5.5, 23.5);   // if map is provided, dock is fixed
   Eigen::Vector2f docking_station_pos(-0.5, 0.);      // if using slam, dock is in front of robot
   rclcpp::spin(std::make_shared<TurtleBot4RechargeMonitorNode>(docking_station_pos));
   rclcpp::shutdown();

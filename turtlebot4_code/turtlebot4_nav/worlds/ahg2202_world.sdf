@@ -280,7 +280,7 @@
                 </visual>
             </link>
         </model>
-        <include>
+        <!-- <include>
             <name>Sofa1</name>
             <pose>-1 6 0 0 0 0</pose>
             <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/Sofa</uri>
@@ -384,6 +384,6 @@
             <name>Chair8</name>
             <pose>-9 11.8 0 0 0 3.1416</pose>
             <uri>https://fuel.gazebosim.org/1.0/OpenRobotics/models/OfficeChairGrey</uri>
-        </include>
+        </include> -->
     </world>
 </sdf>

@@ -84,8 +84,8 @@ RUN echo "export ROS_DOMAIN_ID=25" >> ~/.bashrc
 RUN echo "export IGN_CONFIG_PATH=/usr/share/ignition/" >> ~/.bashrc
 RUN echo "export GZ_VERSION=${GZ_VERSION}" >> ~/.bashrc
 RUN echo "alias run_maze_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py slam:=true nav2:=true rviz:=true world:=maze' " >> ~/.bashrc
-RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py slam:=true nav2:=true rviz:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708' " >> ~/.bashrc
-#RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py nav2:=true rviz:=true localization:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708' " >> ~/.bashrc
+#RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py slam:=true nav2:=true rviz:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708' " >> ~/.bashrc
+RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py nav2:=true rviz:=true localization:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708 map:=/home/dev/turtlebot4_nav/maps/AHG.yaml' " >> ~/.bashrc
 
 RUN git clone https://github.com/ut-amrl/amrl_msgs.git && \
     git clone https://github.com/ut-amrl/ut_turtlebots.git --recurse-submodules
@@ -107,6 +107,10 @@ COPY --chown=dev:dev ./tmux_session.sh /home/dev/tmux_session.sh
 COPY --chown=dev:dev ./turtlebot4_nav /home/dev/turtlebot4_nav
 COPY --chown=dev:dev ./pj_layouts /home/dev/pj_layouts
 RUN echo "export GZ_SIM_RESOURCE_PATH=/home/dev/turtlebot4_nav/worlds/" >> ~/.bashrc
+
+# uncomment below if you want to use GPU for Gazebo laser scan
+#RUN echo "export LIBGL_ALWAYS_SOFTWARE=true" >> ~/.bashrc
+
 RUN chmod u+x /home/dev/tmux_session.sh
 CMD [ "/home/dev/tmux_session.sh" ]
 ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
