@@ -65,7 +65,7 @@ tmux send-keys -t $session:$window 'colcon build && source install/setup.bash &&
 
 window=1
 tmux new-window -t $session:$window -n 'recharge_node'
-tmux send-keys -t $session:$window "source install/setup.bash && source amrl_msgs/install/setup.bash && source ut_turtlebots/install/setup.bash ros2 run turtlebot4_nav turtlebot4_recharge_monitor_node" C-m
+tmux send-keys -t $session:$window "source install/setup.bash && source amrl_msgs/install/setup.bash && source ut_turtlebots/install/setup.bash && ros2 run turtlebot4_nav turtlebot4_recharge_monitor_node" C-m
 
 window=2
 tmux new-window -t $session:$window -n 'plotjuggler'
