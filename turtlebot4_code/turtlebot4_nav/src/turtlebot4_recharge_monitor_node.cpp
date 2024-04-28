@@ -28,7 +28,8 @@ public:
             : Node("turtlebot4_recharge_monitor_node")
     {
       docking_station_pos_ = docking_station_pos;
-      docking_station_pos_map_ = Eigen::Vector2f(-5.5, 23.5);
+//      docking_station_pos_map_ = Eigen::Vector2f(-5.5, 23.5);
+      docking_station_pos_map_ = Eigen::Vector2f(-0.5, 0.0);
       robot_pos_ = Eigen::Vector2f(0.0, 0.0); // assume robot starts at origin
       float max_charge = 1.63;             // maximum battery charge [Ah]
 
@@ -69,7 +70,8 @@ public:
             std::bind(&TurtleBot4RechargeMonitorNode::dock_status_callback, this, std::placeholders::_1));
 
       // Client to cancel current plan
-      nav_to_pose_client_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(this, "/navigate_to_pose");
+//      nav_to_pose_client_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(this, "/navigate_to_pose");
+      nav_to_position_client_ = rclcpp_action::create_client<irobot_create_msgs::action::NavigateToPosition>(this, "/ut/navigate_to_position");
 
       // Client to send dock command
 //      dock_client_ = rclcpp_action::create_client<irobot_create_msgs::action::Dock>(this, "/dock");
@@ -101,7 +103,7 @@ public:
 
       // if we are on our way to the docking station, no need to estimate distance-to-discharge
 //      bool b_near_docking_station = (robot_pos_ - docking_station_pos_).norm() < 0.75;
-      bool b_near_docking_station = (robot_pos_).norm() < 0.75;
+      bool b_near_docking_station = (robot_pos_).norm() < 1.5;
       auto near_dock_msg = std_msgs::msg::Bool();
       near_dock_msg.data = b_near_docking_station;
       near_docking_publisher_->publish(near_dock_msg);
@@ -187,14 +189,16 @@ public:
     void replan_to_(const nav2_msgs::action::NavigateToPose::Goal &goal)
     {
       // cancel current plan
-      auto cancel_future = nav_to_pose_client_->async_cancel_all_goals();
+//      auto cancel_future = nav_to_pose_client_->async_cancel_all_goals();
+      auto cancel_future = nav_to_position_client_->async_cancel_all_goals();
       std::cout << "Canceling current plan" << std::endl;
 
       auto send_goal_options = rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SendGoalOptions();
       send_goal_options.goal_response_callback = std::bind(&TurtleBot4RechargeMonitorNode::goal_response_callback, this, std::placeholders::_1);
       send_goal_options.feedback_callback = std::bind(&TurtleBot4RechargeMonitorNode::feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
       send_goal_options.result_callback = std::bind(&TurtleBot4RechargeMonitorNode::result_callback, this, std::placeholders::_1);
-      nav_to_pose_client_->async_send_goal(goal, send_goal_options);
+//      nav_to_pose_client_->async_send_goal(goal, send_goal_options);
+      nav_to_position_client_->async_send_goal(goal, send_goal_options);
       std::cout << "Scheduled send goal" << std::endl;
     }
 
@@ -243,7 +247,8 @@ public:
 
 private:
     // Actions
-    rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr nav_to_pose_client_;
+//    rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr nav_to_pose_client_;
+    rclcpp_action::Client<irobot_create_msgs::action::NavigateToPosition>::SharedPtr nav_to_position_client_;
     rclcpp_action::Client<amrl_msgs::action::TurtlebotDock>::SharedPtr dock_client_;
 //    rclcpp_action::Client<irobot_create_msgs::action::Dock>::SharedPtr dock_client_;
 
