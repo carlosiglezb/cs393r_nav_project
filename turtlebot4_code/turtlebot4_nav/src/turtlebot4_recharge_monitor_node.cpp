@@ -13,6 +13,7 @@
 #include "sensor_msgs/msg/battery_state.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/float32.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 #include "amrl_msgs/msg/turtlebot_dock_status.hpp"
 //#include "irobot_create_msgs/msg/dock_status.hpp"
 // Actions
@@ -69,9 +70,15 @@ public:
             rclcpp::SensorDataQoS(),
             std::bind(&TurtleBot4RechargeMonitorNode::dock_status_callback, this, std::placeholders::_1));
 
+      // Remap CMD velocity to /ut/cmd_vel
+      cmd_remap_subscriber_ = this->create_subscription<geometry_msgs::msg::Twist>(
+            "/cmd_vel",
+            rclcpp::SensorDataQoS(),
+            std::bind(&TurtleBot4RechargeMonitorNode::cmd_remap_callback, this, std::placeholders::_1));
+
       // Client to cancel current plan
-//      nav_to_pose_client_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(this, "/navigate_to_pose");
-      nav_to_position_client_ = rclcpp_action::create_client<irobot_create_msgs::action::NavigateToPosition>(this, "/ut/navigate_to_position");
+      nav_to_pose_client_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(this, "/navigate_to_pose");
+//      nav_to_position_client_ = rclcpp_action::create_client<irobot_create_msgs::action::NavigateToPosition>(this, "/ut/navigate_to_position");
 
       // Client to send dock command
 //      dock_client_ = rclcpp_action::create_client<irobot_create_msgs::action::Dock>(this, "/dock");
@@ -186,19 +193,26 @@ public:
       b_is_docked_ = msg->is_docked;
     }
 
+    void cmd_remap_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
+    {
+      // Remap cmd_vel to /ut/cmd_vel
+      auto cmd_vel_publisher = this->create_publisher<geometry_msgs::msg::Twist>("/ut/cmd_vel", 1);
+      cmd_vel_publisher->publish(*msg);
+    }
+
     void replan_to_(const nav2_msgs::action::NavigateToPose::Goal &goal)
     {
       // cancel current plan
-//      auto cancel_future = nav_to_pose_client_->async_cancel_all_goals();
-      auto cancel_future = nav_to_position_client_->async_cancel_all_goals();
+      auto cancel_future = nav_to_pose_client_->async_cancel_all_goals();
+//      auto cancel_future = nav_to_position_client_->async_cancel_all_goals();
       std::cout << "Canceling current plan" << std::endl;
 
       auto send_goal_options = rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SendGoalOptions();
       send_goal_options.goal_response_callback = std::bind(&TurtleBot4RechargeMonitorNode::goal_response_callback, this, std::placeholders::_1);
       send_goal_options.feedback_callback = std::bind(&TurtleBot4RechargeMonitorNode::feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
       send_goal_options.result_callback = std::bind(&TurtleBot4RechargeMonitorNode::result_callback, this, std::placeholders::_1);
-//      nav_to_pose_client_->async_send_goal(goal, send_goal_options);
-      nav_to_position_client_->async_send_goal(goal, send_goal_options);
+      nav_to_pose_client_->async_send_goal(goal, send_goal_options);
+//      nav_to_position_client_->async_send_goal(goal, send_goal_options);
       std::cout << "Scheduled send goal" << std::endl;
     }
 
@@ -247,8 +261,8 @@ public:
 
 private:
     // Actions
-//    rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr nav_to_pose_client_;
-    rclcpp_action::Client<irobot_create_msgs::action::NavigateToPosition>::SharedPtr nav_to_position_client_;
+    rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr nav_to_pose_client_;
+//    rclcpp_action::Client<irobot_create_msgs::action::NavigateToPosition>::SharedPtr nav_to_position_client_;
     rclcpp_action::Client<amrl_msgs::action::TurtlebotDock>::SharedPtr dock_client_;
 //    rclcpp_action::Client<irobot_create_msgs::action::Dock>::SharedPtr dock_client_;
 
@@ -257,6 +271,7 @@ private:
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_to_goal_subscriber_;
     rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr battery_status_subscriber_;
     rclcpp::Subscription<amrl_msgs::msg::TurtlebotDockStatus>::SharedPtr dock_status_subscriber_;
+    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_remap_subscriber_;
 //    rclcpp::Subscription<irobot_create_msgs::msg::DockStatus>::SharedPtr dock_status_subscriber_;
 
     // Publishers

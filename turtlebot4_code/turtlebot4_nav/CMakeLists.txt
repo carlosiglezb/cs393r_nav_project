@@ -14,6 +14,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(amrl_msgs REQUIRED)
 #find_package(irobot_create_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
@@ -28,6 +29,7 @@ ament_target_dependencies(turtlebot4_recharge_monitor_node
         nav_msgs
         nav2_msgs
         std_msgs
+        geometry_msgs
         amrl_msgs
 #        irobot_create_msgs
         rclcpp_action)
