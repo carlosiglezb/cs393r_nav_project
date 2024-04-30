@@ -71,10 +71,10 @@ public:
             std::bind(&TurtleBot4RechargeMonitorNode::dock_status_callback, this, std::placeholders::_1));
 
       // Remap CMD velocity to /ut/cmd_vel
-      cmd_remap_subscriber_ = this->create_subscription<geometry_msgs::msg::Twist>(
-            "/cmd_vel",
-            rclcpp::SensorDataQoS(),
-            std::bind(&TurtleBot4RechargeMonitorNode::cmd_remap_callback, this, std::placeholders::_1));
+//      cmd_remap_subscriber_ = this->create_subscription<geometry_msgs::msg::Twist>(
+//            "/cmd_vel",
+//            rclcpp::SensorDataQoS(),
+//            std::bind(&TurtleBot4RechargeMonitorNode::cmd_remap_callback, this, std::placeholders::_1));
 
       // Client to cancel current plan
       nav_to_pose_client_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(this, "/navigate_to_pose");
@@ -194,12 +194,12 @@ public:
       b_is_docked_ = msg->is_docked;
     }
 
-    void cmd_remap_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
-    {
-      // Remap cmd_vel to /ut/cmd_vel
-      auto cmd_vel_publisher = this->create_publisher<geometry_msgs::msg::Twist>("/ut/cmd_vel", 1);
-      cmd_vel_publisher->publish(*msg);
-    }
+//    void cmd_remap_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
+//    {
+//      // Remap cmd_vel to /ut/cmd_vel
+//      auto cmd_vel_publisher = this->create_publisher<geometry_msgs::msg::Twist>("/ut/cmd_vel", 1);
+//      cmd_vel_publisher->publish(*msg);
+//    }
 
     void replan_to_(const nav2_msgs::action::NavigateToPose::Goal &goal)
     {
@@ -272,7 +272,7 @@ private:
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_to_goal_subscriber_;
     rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr battery_status_subscriber_;
     rclcpp::Subscription<amrl_msgs::msg::TurtlebotDockStatus>::SharedPtr dock_status_subscriber_;
-    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_remap_subscriber_;
+//    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_remap_subscriber_;
 //    rclcpp::Subscription<irobot_create_msgs::msg::DockStatus>::SharedPtr dock_status_subscriber_;
 
     // Publishers
