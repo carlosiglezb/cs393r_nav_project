@@ -29,8 +29,8 @@ public:
             : Node("turtlebot4_recharge_monitor_node")
     {
       docking_station_pos_ = docking_station_pos;
-//      docking_station_pos_map_ = Eigen::Vector2f(-5.5, 23.5);
-      docking_station_pos_map_ = Eigen::Vector2f(-0.5, 0.0);
+      docking_station_pos_map_ = Eigen::Vector2f(-5.5, 23.5);
+//      docking_station_pos_map_ = Eigen::Vector2f(-0.5, 0.0);
       robot_pos_ = Eigen::Vector2f(0.0, 0.0); // assume robot starts at origin
       float max_charge = 1.63;             // maximum battery charge [Ah]
 
@@ -71,10 +71,10 @@ public:
             std::bind(&TurtleBot4RechargeMonitorNode::dock_status_callback, this, std::placeholders::_1));
 
       // Remap CMD velocity to /ut/cmd_vel
-      cmd_remap_subscriber_ = this->create_subscription<geometry_msgs::msg::Twist>(
-            "/cmd_vel",
-            rclcpp::SensorDataQoS(),
-            std::bind(&TurtleBot4RechargeMonitorNode::cmd_remap_callback, this, std::placeholders::_1));
+//      cmd_remap_subscriber_ = this->create_subscription<geometry_msgs::msg::Twist>(
+//            "/cmd_vel",
+//            rclcpp::SensorDataQoS(),
+//            std::bind(&TurtleBot4RechargeMonitorNode::cmd_remap_callback, this, std::placeholders::_1));
 
       // Client to cancel current plan
       nav_to_pose_client_ = rclcpp_action::create_client<nav2_msgs::action::NavigateToPose>(this, "/navigate_to_pose");
@@ -104,6 +104,7 @@ public:
         b_prepare_to_dock_ = false;
         b_replan_to_docking_station_ = false;
         b_replan_to_docking_station_sent_ = false;
+        nav_to_pose_client_->async_cancel_all_goals();
         std::cout << "Docked. Resetting flags." << std::endl;
         return;
       }
@@ -193,12 +194,12 @@ public:
       b_is_docked_ = msg->is_docked;
     }
 
-    void cmd_remap_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
-    {
-      // Remap cmd_vel to /ut/cmd_vel
-      auto cmd_vel_publisher = this->create_publisher<geometry_msgs::msg::Twist>("/ut/cmd_vel", 1);
-      cmd_vel_publisher->publish(*msg);
-    }
+//    void cmd_remap_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
+//    {
+//      // Remap cmd_vel to /ut/cmd_vel
+//      auto cmd_vel_publisher = this->create_publisher<geometry_msgs::msg::Twist>("/ut/cmd_vel", 1);
+//      cmd_vel_publisher->publish(*msg);
+//    }
 
     void replan_to_(const nav2_msgs::action::NavigateToPose::Goal &goal)
     {
@@ -271,7 +272,7 @@ private:
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_to_goal_subscriber_;
     rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr battery_status_subscriber_;
     rclcpp::Subscription<amrl_msgs::msg::TurtlebotDockStatus>::SharedPtr dock_status_subscriber_;
-    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_remap_subscriber_;
+//    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_remap_subscriber_;
 //    rclcpp::Subscription<irobot_create_msgs::msg::DockStatus>::SharedPtr dock_status_subscriber_;
 
     // Publishers
