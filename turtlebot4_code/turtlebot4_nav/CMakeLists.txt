@@ -21,8 +21,10 @@ find_package(rclcpp_action REQUIRED)
 
 #include_directories(include)
 
+add_executable(battery_discharge_node src/simple_battery_discharge_node.cpp)
 add_executable(cmd_vel_remap_node src/cmd_vel_remap_node.cpp)
 add_executable(turtlebot4_recharge_monitor_node src/turtlebot4_recharge_monitor_node.cpp)
+ament_target_dependencies(battery_discharge_node rclcpp sensor_msgs)
 ament_target_dependencies(cmd_vel_remap_node rclcpp geometry_msgs)
 ament_target_dependencies(turtlebot4_recharge_monitor_node
         rclcpp
@@ -36,15 +38,21 @@ ament_target_dependencies(turtlebot4_recharge_monitor_node
 #        irobot_create_msgs
         rclcpp_action)
 
+target_include_directories(battery_discharge_node PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
 target_include_directories(cmd_vel_remap_node PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 target_include_directories(turtlebot4_recharge_monitor_node PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
+target_compile_features(battery_discharge_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 target_compile_features(cmd_vel_remap_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 target_compile_features(turtlebot4_recharge_monitor_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
+install(TARGETS battery_discharge_node
+        DESTINATION lib/${PROJECT_NAME})
 install(TARGETS cmd_vel_remap_node
         DESTINATION lib/${PROJECT_NAME})
 install(TARGETS turtlebot4_recharge_monitor_node
