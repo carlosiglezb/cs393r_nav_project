@@ -87,6 +87,8 @@ RUN echo "export GZ_VERSION=${GZ_VERSION}" >> ~/.bashrc
 RUN echo "alias run_maze_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py slam:=true nav2:=true rviz:=true world:=maze' " >> ~/.bashrc
 #RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py slam:=true nav2:=true rviz:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708' " >> ~/.bashrc
 RUN echo "alias run_ahg_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py nav2:=true rviz:=true localization:=true world:=ahg2202_world x:=-5.5 y:=24 yaw:=1.5708 map:=/home/dev/turtlebot4_nav/maps/AHG.yaml' " >> ~/.bashrc
+RUN #echo "alias run_cdl_sim='ros2 launch turtlebot4_nav remapped_turtlebot4_nav_bringup.launch.py world:=CDL_map x:=-0.5 y:=2 yaw:=3.1416 map:=/home/dev/turtlebot4_nav/maps/CDL_map.yaml' " >> ~/.bashrc
+RUN echo "alias run_cdl_sim='ros2 launch turtlebot4_ignition_bringup turtlebot4_ignition.launch.py nav2:=true rviz:=true localization:=true world:=CDL_map x:=-0.5 y:=2 yaw:=3.1416 map:=/home/dev/turtlebot4_nav/maps/CDL_map.yaml' " >> ~/.bashrc
 
 RUN git clone https://github.com/ut-amrl/amrl_msgs.git && \
     git clone https://github.com/ut-amrl/ut_turtlebots.git --recurse-submodules

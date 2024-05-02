@@ -32,40 +32,21 @@ then
     exit 127
 fi
 
-
-#if [ "${ARG}" == "-d" ]
-#then
-#    INSTALL_PATH=$2
-#    if [ -z "${INSTALL_PATH}" ]
-#    then
-#        INSTALL_PATH="${HOME}/"
-#    fi
-#
-#    # check for /  at the end
-#    if [ ${INSTALL_PATH: -1} != '/' ]
-#    then
-#        INSTALL_PATH="${INSTALL_PATH}/"
-#    fi
-#else
-#    INSTALL_PATH="${HOME}/"
-#fi
-
-#if ! [[ -d "${INSTALL_PATH}ut_automata" ]]
-#then
-#    echo "${INSTALL_PATH}ut_automata does not exist, please provide a valid path using ./tmux_session.sh -d <INSTALL_PATH>"
-#    exit 127
-#fi
-
 tmux new-session -d -s $session
 tmux set mouse on
 window=0
 
 tmux rename-window -t $session:$window 'roscore'
-tmux send-keys -t $session:$window 'colcon build && source install/setup.bash && run_ahg_sim' C-m
+tmux send-keys -t $session:$window '' C-m
+#tmux send-keys -t $session:$window 'colcon build && source install/setup.bash && run_cdl_sim' C-m
 
 window=1
 tmux new-window -t $session:$window -n 'recharge_node'
 tmux send-keys -t $session:$window "source install/setup.bash && source amrl_msgs/install/setup.bash && source ut_turtlebots/install/setup.bash && ros2 run turtlebot4_nav turtlebot4_recharge_monitor_node" C-m
+
+window=4
+tmux new-window -t $session:$window -n 'battery_node'
+tmux send-keys -t $session:$window "source install/setup.bash && ros2 run turtlebot4_nav battery_discharge_node" C-m
 
 window=2
 tmux new-window -t $session:$window -n 'plotjuggler'
