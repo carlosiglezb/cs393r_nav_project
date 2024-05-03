@@ -14,7 +14,7 @@ public:
 
         // Create a timer to update battery state every second
         timer_ = this->create_wall_timer(
-            1s, std::bind(&SimpleBatteryDischargeNode::newTimeCallback, this);
+            1s, std::bind(&SimpleBatteryDischargeNode::newTimeCallback, this));
 
         // Create a publisher to publish the remapped cmd_vel message
         battery_pub_ = this->create_publisher<sensor_msgs::msg::BatteryState>("/ut/battery_state", 1);
@@ -23,7 +23,7 @@ public:
 private:
     void newTimeCallback()
     {
-        t_s_++;
+        t_s_+=1;
         // update battery state by reducing charge by 0.00025 Ah every second (realistic discharge rate)
         // update battery state by reducing charge by 0.001 Ah every second (shortcut)
         auto updated_battery_state = sensor_msgs::msg::BatteryState();
@@ -35,7 +35,7 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::BatteryState>::SharedPtr battery_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
     float max_charge_;    // max charge: 1.63 Ah
-    int t_s_;              // time in seconds
+    float t_s_;              // time in seconds
 };
 
 int main(int argc, char **argv)

@@ -35,7 +35,7 @@ public:
       float max_charge = 1.63;             // maximum battery charge [Ah]
 
       // Model of battery discharge to distance
-      float min_battery_percentage_ = 0.60;     // minimum of 20% battery charge at end of trip
+      float min_battery_percentage_ = 0.70;     // minimum of 20% battery charge at end of trip
       min_safe_charge = min_battery_percentage_ * max_charge;     // min allowed charge at dock
       battery_charge_ = 1.63;             // assume full battery charge (get updated at next tick)
       dist_per_charge_ = 570.;            // 570 meters per Ah, obtained from data collection
@@ -102,7 +102,7 @@ public:
       }
 
       // if we are on our way to the docking station, no need to estimate distance-to-discharge
-      bool b_near_docking_station = (robot_pos_).norm() < 1.5;
+      bool b_near_docking_station = (robot_pos_).norm() < 3.5;
       auto near_dock_msg = std_msgs::msg::Bool();
       near_dock_msg.data = b_near_docking_station;
       near_docking_publisher_->publish(near_dock_msg);
@@ -126,12 +126,12 @@ public:
       // if we are on our way to the docking station, no need to compute anything else
       if(b_replan_to_docking_station_) {
         // re-plan and return to docking station
-        auto goal = nav2_msgs::action::NavigateToPose::Goal();
-        goal.pose.pose.position.x = docking_station_pos_map_[0];
-        goal.pose.pose.position.y = docking_station_pos_map_[1];
-        goal.pose.header.frame_id = "map";
-        goal.pose.header.stamp = this->now();
-        replan_to_(goal);
+//        auto goal = nav2_msgs::action::NavigateToPose::Goal();
+//        goal.pose.pose.position.x = docking_station_pos_map_[0];
+//        goal.pose.pose.position.y = docking_station_pos_map_[1];
+//        goal.pose.header.frame_id = "map";
+//        goal.pose.header.stamp = this->now();
+//        replan_to_(goal);
 
         return;
       }
